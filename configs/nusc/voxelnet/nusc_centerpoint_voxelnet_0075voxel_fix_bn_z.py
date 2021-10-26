@@ -85,12 +85,12 @@ test_cfg = dict(
 # dataset settings
 dataset_type = "NuScenesDataset"
 nsweeps = 10
-data_root = "data/nuScenes"
+data_root = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/v1.0-mini"
 
 db_sampler = dict(
     type="GT-AUG",
     enable=False,
-    db_info_path="data/nuScenes/dbinfos_train_10sweeps_withvelo.pkl",
+    db_info_path="/home/ubuntu/PycharmProjects/det3/CenterPoint/download/v1.0-mini/dbinfos_train_10sweeps_withvelo.pkl",
     sample_groups=[
         dict(car=2),
         dict(truck=3),
@@ -142,7 +142,8 @@ voxel_generator = dict(
     range=[-54, -54, -5.0, 54, 54, 3.0],
     voxel_size=[0.075, 0.075, 0.2],
     max_points_in_voxel=10,
-    max_voxel_num=[120000, 160000],
+    # max_voxel_num=[120000, 160000],
+    max_voxel_num=120000,
 )
 
 train_pipeline = [
@@ -163,8 +164,8 @@ test_pipeline = [
     dict(type="Reformat"),
 ]
 
-train_anno = "data/nuScenes/infos_train_10sweeps_withvelo_filter_True.pkl"
-val_anno = "data/nuScenes/infos_val_10sweeps_withvelo_filter_True.pkl"
+train_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/v1.0-mini/infos_train_10sweeps_withvelo_filter_True.pkl"
+val_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/v1.0-mini/infos_val_10sweeps_withvelo_filter_True.pkl"
 test_anno = None
 
 data = dict(

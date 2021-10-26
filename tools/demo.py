@@ -52,7 +52,7 @@ def convert_box(info):
     return detection 
 
 def main():
-    cfg = Config.fromfile('configs/nusc/pp/nusc_centerpoint_pp_02voxel_two_pfn_10sweep_demo.py')
+    cfg = Config.fromfile('/home/ubuntu/PycharmProjects/det3/CenterPoint/configs/nusc/voxelnet/nusc_centerpoint_voxelnet_0075voxel_fix_bn_z.py')
     
     model = build_detector(cfg.model, train_cfg=None, test_cfg=cfg.test_cfg)
 
@@ -68,7 +68,7 @@ def main():
         pin_memory=False,
     )
 
-    checkpoint = load_checkpoint(model, 'work_dirs/centerpoint_pillar_512_demo/latest.pth', map_location="cpu")
+    checkpoint = load_checkpoint(model, '/home/ubuntu/PycharmProjects/det3/CenterPoint/download/epoch_20.pth', map_location="cpu")
     model.eval()
 
     model = model.cuda()
@@ -81,6 +81,7 @@ def main():
 
     for i, data_batch in enumerate(data_loader):
         info = dataset._nusc_infos[i]
+        print(info)
         gt_annos.append(convert_box(info))
 
         points = data_batch['points'][:, 1:4].cpu().numpy()
@@ -104,8 +105,8 @@ def main():
         visual(points_list[i], gt_annos[i], detections[i], i)
         print("Rendered Image {}".format(i))
     
-    image_folder = 'demo'
-    video_name = 'video.avi'
+    image_folder = '/home/ubuntu/PycharmProjects/det3/CenterPoint/demo'
+    video_name = '/home/ubuntu/PycharmProjects/det3/CenterPoint/demo/video.avi'
 
     images = [img for img in os.listdir(image_folder) if img.endswith(".png")]
     images.sort()

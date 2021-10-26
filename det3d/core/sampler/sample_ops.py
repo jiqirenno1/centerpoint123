@@ -212,7 +212,7 @@ class DataBaseSamplerV2:
                 s_points_list = s_points_list_new
             ret = {
                 "gt_names": np.array([s["name"] for s in sampled]),
-                "difficulty": np.array([s["difficulty"] for s in sampled]),
+                # "difficulty": np.array([s["difficulty"] for s in sampled]),
                 "gt_boxes": sampled_gt_boxes,
                 "points": np.concatenate(s_points_list, axis=0),
                 "gt_masks": np.ones((num_sampled,), dtype=np.bool_),

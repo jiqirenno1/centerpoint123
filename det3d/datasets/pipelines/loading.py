@@ -12,6 +12,8 @@ from det3d.core import box_np_ops
 import pickle 
 import os 
 from ..registry import PIPELINES
+import open3d as o3d
+from det3d.datasets.kitti import kitti_common as kitti
 
 def _dict_select(dict_, inds):
     for k, v in dict_.items():
@@ -166,6 +168,31 @@ class LoadPointCloudFromFile(object):
                 res["lidar"]["points"] = points
                 res["lidar"]["times"] = times
                 res["lidar"]["combined"] = np.hstack([points, times])
+        elif self.type == "KittiDataset":
+
+            pc_info = info["point_cloud"]
+            velo_path = Path(pc_info["velodyne_path"])
+            if not velo_path.is_absolute():
+                velo_path = (
+                        Path(res["metadata"]["image_prefix"]) / pc_info["velodyne_path"]
+                )
+            velo_reduced_path = (
+                    velo_path.parent.parent
+                    / (velo_path.parent.stem + "_reduced")
+                    / velo_path.name
+            )
+            if velo_reduced_path.exists():
+                velo_path = velo_reduced_path
+            # points = np.fromfile(str(velo_path), dtype=np.float32, count=-1).reshape(
+            #     [-1, res["metadata"]["num_point_features"]]
+            # )
+            pcd = o3d.io.read_point_cloud(str(velo_path))
+            points = np.asarray(pcd.points, dtype=np.float32).reshape([-1, res["metadata"]["num_point_features"]])
+
+            res["lidar"]["points"] = points
+
+
+
         else:
             raise NotImplementedError
 
@@ -193,6 +220,46 @@ class LoadPointCloudAnnotations(object):
                 "boxes": info["gt_boxes"].astype(np.float32),
                 "names": info["gt_names"],
             }
+
+        elif res["type"] == "KittiDataset":
+
+            # calib = info["calib"]
+            # calib_dict = {
+            #     "rect": calib["R0_rect"],
+            #     "Trv2c": calib["Tr_velo_to_cam"],
+            #     "P2": calib["P2"],
+            # }
+            # res["calib"] = calib_dict
+            if "annos" in info:
+                annos = info["annos"]
+                # we need other objects to avoid collision when sample
+                annos = kitti.remove_dontcare(annos)
+                locs = annos["location"]
+                dims = annos["dimensions"]
+                rots = annos["rotation_y"]
+                gt_names = annos["name"]
+                gt_boxes = np.concatenate(
+                    [locs, dims, rots[..., np.newaxis]], axis=1
+                ).astype(np.float32)
+                # calib = info["calib"]
+                # gt_boxes = box_np_ops.box_camera_to_lidar(
+                #     gt_boxes, calib["R0_rect"], calib["Tr_velo_to_cam"]
+                # )
+
+                # only center format is allowed. so we need to convert
+                # kitti [0.5, 0.5, 0] center to [0.5, 0.5, 0.5]
+                # box_np_ops.change_box3d_center_(
+                #     gt_boxes, [0.5, 0.5, 0], [0.5, 0.5, 0.5]
+                # )
+
+                res["lidar"]["annotations"] = {
+                    "boxes": gt_boxes,
+                    "names": gt_names,
+                }
+                # res["cam"]["annotations"] = {
+                #     "boxes": annos["bbox"],
+                #     "names": gt_names,
+                # }
         else:
             pass 
 

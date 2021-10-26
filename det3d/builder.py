@@ -14,6 +14,14 @@ from det3d.solver import optim
 from det3d.solver.fastai_optim import FastAIMixedOptim, OptimWrapper
 from torch import nn
 
+from det3d.core.anchor.anchor_generator import (
+    AnchorGeneratorRange,
+    AnchorGeneratorStride,
+    BevAnchorGeneratorRange,
+)
+
+from det3d.core.bbox import region_similarity
+from det3d.core.bbox.box_coders import BevBoxCoderTorch, GroundBox3dCoderTorch
 
 def build_voxel_generator(voxel_config):
 
@@ -220,3 +228,124 @@ def build_dbsampler(cfg, logger=None):
     )
 
     return sampler
+
+def build_anchor_generator(anchor_config):
+    """Create optimizer based on config.
+
+    Args:
+        optimizer_config: A Optimizer proto message.
+
+    Returns:
+        An optimizer and a list of variables for summary.
+
+    Raises:
+        ValueError: when using an unsupported input data type.
+    """
+    ag_type = anchor_config.type
+    config = anchor_config
+
+    if "velocities" not in config:
+        velocities = None
+    else:
+        velocities = config.velocities
+
+    if ag_type == "anchor_generator_stride":
+        ag = AnchorGeneratorStride(
+            sizes=config.sizes,
+            anchor_strides=config.strides,
+            anchor_offsets=config.offsets,
+            rotations=config.rotations,
+            velocities=velocities,
+            match_threshold=config.matched_threshold,
+            unmatch_threshold=config.unmatched_threshold,
+            class_name=config.class_name,
+        )
+        return ag
+    elif ag_type == "anchor_generator_range":
+        ag = AnchorGeneratorRange(
+            sizes=config.sizes,
+            anchor_ranges=config.anchor_ranges,
+            rotations=config.rotations,
+            velocities=velocities,
+            match_threshold=config.matched_threshold,
+            unmatch_threshold=config.unmatched_threshold,
+            class_name=config.class_name,
+        )
+        return ag
+    elif ag_type == "bev_anchor_generator_range":
+        ag = BevAnchorGeneratorRange(
+            sizes=config.sizes,
+            anchor_ranges=config.anchor_ranges,
+            rotations=config.rotations,
+            velocities=velocities,
+            match_threshold=config.matched_threshold,
+            unmatch_threshold=config.unmatched_threshold,
+            class_name=config.class_name,
+        )
+        return ag
+    else:
+        raise ValueError(" unknown anchor generator type")
+
+def build_similarity_metric(similarity_config):
+    """Create optimizer based on config.
+
+    Args:
+        optimizer_config: A Optimizer proto message.
+
+    Returns:
+        An optimizer and a list of variables for summary.
+
+    Raises:
+        ValueError: when using an unsupported input data type.
+    """
+    similarity_type = similarity_config.type
+
+    if similarity_type == "rotate_iou_similarity":
+        return region_similarity.RotateIouSimilarity()
+    elif similarity_type == "nearest_iou_similarity":
+        return region_similarity.NearestIouSimilarity()
+    elif similarity_type == "distance_similarity":
+        cfg = similarity_config.distance_similarity
+        return region_similarity.DistanceSimilarity(
+            distance_norm=cfg.distance_norm,
+            with_rotation=cfg.with_rotation,
+            rotation_alpha=cfg.rotation_alpha,
+        )
+    else:
+        raise ValueError("unknown similarity type")
+
+def build_box_coder(box_coder_config):
+    """Create optimizer based on config.
+
+    Args:
+        optimizer_config: A Optimizer proto message.
+
+    Returns:
+        An optimizer and a list of variables for summary.
+
+    Raises:
+        ValueError: when using an unsupported input data type.
+    """
+    box_coder_type = box_coder_config["type"]
+    cfg = box_coder_config
+
+    n_dim = cfg.get("n_dim", 9)
+    norm_velo = cfg.get("norm_velo", False)
+
+    if box_coder_type == "ground_box3d_coder":
+        return GroundBox3dCoderTorch(
+            cfg["linear_dim"],
+            cfg["encode_angle_vector"],
+            n_dim=n_dim,
+            norm_velo=norm_velo,
+        )
+    elif box_coder_type == "bev_box_coder":
+        cfg = box_coder_config
+        return BevBoxCoderTorch(
+            cfg["linear_dim"],
+            cfg["encode_angle_vector"],
+            cfg["z_fixed"],
+            cfg["h_fixed"],
+        )
+    else:
+        raise ValueError("unknown box_coder type")

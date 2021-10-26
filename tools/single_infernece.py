@@ -237,7 +237,7 @@ if __name__ == "__main__":
     proc_1.initialize()
     
     rospy.init_node('centerpoint_ros_node')
-    sub_lidar_topic = [ "/velodyne_points", 
+    sub_lidar_topic = ["/velodyne_points",
                         "/top/rslidar_points",
                         "/points_raw", 
                         "/lidar_protector/merged_cloud", 

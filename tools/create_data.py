@@ -1,12 +1,26 @@
 import copy
 from pathlib import Path
 import pickle
+import nuscenes
+
+
 
 import fire, os
 
+from det3d.datasets.kitti import kitti_common as kitti_ds
 from det3d.datasets.nuscenes import nusc_common as nu_ds
-from det3d.datasets.utils.create_gt_database import create_groundtruth_database
+from det3d.datasets.utils.create_gt_database import create_groundtruth_database, create_my_groundtruth_database
 from det3d.datasets.waymo import waymo_common as waymo_ds
+
+
+def kitti_data_prep(root_path):
+    kitti_ds.create_kitti_info_file(root_path)
+    # kitti_ds.create_reduced_point_cloud(root_path)
+    create_my_groundtruth_database(
+        "KITTI", root_path, Path(root_path) / "kitti_infos_train.pkl"
+    )
+
+
 
 def nuscenes_data_prep(root_path, version, nsweeps=10, filter_zero=True):
     nu_ds.create_nuscenes_infos(root_path, version=version, nsweeps=nsweeps, filter_zero=filter_zero)

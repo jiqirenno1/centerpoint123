@@ -74,7 +74,7 @@ class DBFilterByDifficulty(DataBasePreprocessing):
             new_db_infos[key] = [
                 info
                 for info in dinfos
-                if info["difficulty"] not in self._removed_difficulties
+                # if info["difficulty"] not in self._removed_difficulties
             ]
         return new_db_infos
 

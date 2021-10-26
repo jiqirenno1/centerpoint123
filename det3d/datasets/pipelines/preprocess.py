@@ -2,13 +2,21 @@ import numpy as np
 
 from det3d.core.bbox import box_np_ops
 from det3d.core.sampler import preprocess as prep
-from det3d.builder import build_dbsampler
+#from det3d.builder import build_dbsampler
+
+from det3d.builder import (
+    build_dbsampler,
+    build_anchor_generator,
+    build_similarity_metric,
+    build_box_coder,
+)
 
 from det3d.core.input.voxel_generator import VoxelGenerator
 from det3d.core.utils.center_utils import (
     draw_umich_gaussian, gaussian_radius
 )
 from ..registry import PIPELINES
+from det3d.core.anchor.target_assigner import TargetAssigner
 
 
 def _dict_select(dict_, inds):
@@ -56,6 +64,8 @@ class Preprocess(object):
                 points = res["lidar"]["points"]
         elif res["type"] in ["NuScenesDataset"]:
             points = res["lidar"]["combined"]
+        elif res["type"] in ["KittiDataset"]:
+            points = res["lidar"]["points"]
         else:
             raise NotImplementedError
 
@@ -282,6 +292,12 @@ class AssignLabel(object):
         self._min_radius = assigner_cfg.min_radius
 
     def __call__(self, res, info):
+        # print("**********start res:")
+        # print(res)
+        # print("**********start info:")
+        # print(info)
+        # print("**********end")
+
         max_objs = self._max_objs
         class_names_by_task = [t.class_names for t in self.tasks]
         num_classes_by_task = [t.num_class for t in self.tasks]
@@ -353,7 +369,9 @@ class AssignLabel(object):
                     # [reg, hei, dim, vx, vy, rots, rotc]
                     anno_box = np.zeros((max_objs, 10), dtype=np.float32)
                 elif res['type'] == 'WaymoDataset':
-                    anno_box = np.zeros((max_objs, 10), dtype=np.float32) 
+                    anno_box = np.zeros((max_objs, 10), dtype=np.float32)
+                elif res['type'] == 'KittiDataset':
+                    anno_box = np.zeros((max_objs, 8), dtype=np.float32)
                 else:
                     raise NotImplementedError("Only Support nuScene for Now!")
 
@@ -366,7 +384,10 @@ class AssignLabel(object):
                 for k in range(num_objs):
                     cls_id = gt_dict['gt_classes'][idx][k] - 1
 
-                    w, l, h = gt_dict['gt_boxes'][idx][k][3], gt_dict['gt_boxes'][idx][k][4], \
+                    # w, l, h = gt_dict['gt_boxes'][idx][k][3], gt_dict['gt_boxes'][idx][k][4], \
+                    #           gt_dict['gt_boxes'][idx][k][5]
+                    #change to
+                    l, w, h = gt_dict['gt_boxes'][idx][k][3], gt_dict['gt_boxes'][idx][k][4], \
                               gt_dict['gt_boxes'][idx][k][5]
                     w, l = w / voxel_size[0] / self.out_size_factor, l / voxel_size[1] / self.out_size_factor
                     if w > 0 and l > 0:
@@ -409,6 +430,12 @@ class AssignLabel(object):
                             anno_box[new_idx] = np.concatenate(
                             (ct - (x, y), z, np.log(gt_dict['gt_boxes'][idx][k][3:6]),
                             np.array(vx), np.array(vy), np.sin(rot), np.cos(rot)), axis=None)
+                        elif res['type'] == 'KittiDataset':
+                            # vx, vy = gt_dict['gt_boxes'][idx][k][6:8]
+                            vx, vy = [0., 0.]
+                            rot = gt_dict['gt_boxes'][idx][k][-1]
+                            anno_box[new_idx] = np.concatenate(
+                            (ct - (x, y), z, np.log(gt_dict['gt_boxes'][idx][k][3:6]), np.sin(rot), np.cos(rot)), axis=None)
                         else:
                             raise NotImplementedError("Only Support Waymo and nuScene for Now")
 
@@ -419,25 +446,30 @@ class AssignLabel(object):
                 cats.append(cat)
 
             # used for two stage code 
-            boxes = flatten(gt_dict['gt_boxes'])
-            classes = merge_multi_group_label(gt_dict['gt_classes'], num_classes_by_task)
-
-            if res["type"] == "NuScenesDataset":
-                gt_boxes_and_cls = np.zeros((max_objs, 10), dtype=np.float32)
-            elif res['type'] == "WaymoDataset":
-                gt_boxes_and_cls = np.zeros((max_objs, 10), dtype=np.float32)
-            else:
-                raise NotImplementedError()
-
-            boxes_and_cls = np.concatenate((boxes, 
-                classes.reshape(-1, 1).astype(np.float32)), axis=1)
-            num_obj = len(boxes_and_cls)
-            assert num_obj <= max_objs
-            # x, y, z, w, l, h, rotation_y, velocity_x, velocity_y, class_name
-            boxes_and_cls = boxes_and_cls[:, [0, 1, 2, 3, 4, 5, 8, 6, 7, 9]]
-            gt_boxes_and_cls[:num_obj] = boxes_and_cls
-
-            example.update({'gt_boxes_and_cls': gt_boxes_and_cls})
+            # boxes = flatten(gt_dict['gt_boxes'])
+            # classes = merge_multi_group_label(gt_dict['gt_classes'], num_classes_by_task)
+            #
+            # if res["type"] == "NuScenesDataset":
+            #     gt_boxes_and_cls = np.zeros((max_objs, 10), dtype=np.float32)
+            # elif res['type'] == "WaymoDataset":
+            #     gt_boxes_and_cls = np.zeros((max_objs, 10), dtype=np.float32)
+            # elif res['type'] == "KittiDataset":
+            #     gt_boxes_and_cls = np.zeros((max_objs, 10), dtype=np.float32)
+            # else:
+            #     raise NotImplementedError()
+            #
+            # boxes_and_cls = np.concatenate((boxes,
+            #     classes.reshape(-1, 1).astype(np.float32)), axis=1)
+            # num_obj = len(boxes_and_cls)
+            # assert num_obj <= max_objs
+            # # x, y, z, w, l, h, rotation_y, velocity_x, velocity_y, class_name
+            # print('*********************JJJ')
+            # print(boxes_and_cls.shape)
+            # print('num_obj: ', num_obj)
+            # boxes_and_cls = boxes_and_cls[:, [0, 1, 2, 3, 4, 5, 8, 6, 7, 9]]
+            # gt_boxes_and_cls[:num_obj] = boxes_and_cls
+            #
+            # example.update({'gt_boxes_and_cls': gt_boxes_and_cls})
 
             example.update({'hm': hms, 'anno_box': anno_boxs, 'ind': inds, 'mask': masks, 'cat': cats})
         else:
@@ -447,3 +479,180 @@ class AssignLabel(object):
 
         return res, info
 
+@PIPELINES.register_module
+class AssignTarget(object):
+    def __init__(self, **kwargs):
+        assigner_cfg = kwargs["cfg"]
+        target_assigner_config = assigner_cfg.target_assigner
+        tasks = target_assigner_config.tasks
+        box_coder_cfg = assigner_cfg.box_coder
+
+        anchor_cfg = target_assigner_config.anchor_generators
+        anchor_generators = []
+        for a_cfg in anchor_cfg:
+            anchor_generator = build_anchor_generator(a_cfg)
+            anchor_generators.append(anchor_generator)
+        similarity_calc = build_similarity_metric(
+            target_assigner_config.region_similarity_calculator
+        )
+        positive_fraction = target_assigner_config.sample_positive_fraction
+        if positive_fraction < 0:
+            positive_fraction = None
+        target_assigners = []
+        flag = 0
+
+        box_coder = build_box_coder(box_coder_cfg)
+
+        for task in tasks:
+            target_assigner = TargetAssigner(
+                box_coder=box_coder,
+                anchor_generators=anchor_generators[flag : flag + task.num_class],
+                region_similarity_calculator=similarity_calc,
+                positive_fraction=positive_fraction,
+                sample_size=target_assigner_config.sample_size,
+            )
+            flag += task.num_class
+            target_assigners.append(target_assigner)
+
+        self.target_assigners = target_assigners
+        self.out_size_factor = assigner_cfg.out_size_factor
+        self.anchor_area_threshold = target_assigner_config.pos_area_threshold
+
+    def __call__(self, res, info):
+
+        class_names_by_task = [t.classes for t in self.target_assigners]
+
+        # Calculate output featuremap size
+        grid_size = res["lidar"]["voxels"]["shape"]
+        feature_map_size = grid_size[:2] // self.out_size_factor
+        feature_map_size = [*feature_map_size, 1][::-1]
+
+        anchors_by_task = [
+            t.generate_anchors(feature_map_size) for t in self.target_assigners
+        ]
+        anchor_dicts_by_task = [
+            t.generate_anchors_dict(feature_map_size) for t in self.target_assigners
+        ]
+        reshaped_anchors_by_task = [
+            t["anchors"].reshape([-1, t["anchors"].shape[-1]]) for t in anchors_by_task
+        ]
+        matched_by_task = [t["matched_thresholds"] for t in anchors_by_task]
+        unmatched_by_task = [t["unmatched_thresholds"] for t in anchors_by_task]
+
+        bv_anchors_by_task = [
+            box_np_ops.rbbox2d_to_near_bbox(anchors[:, [0, 1, 3, 4, -1]])
+            for anchors in reshaped_anchors_by_task
+        ]
+
+        anchor_caches_by_task = dict(
+            anchors=reshaped_anchors_by_task,
+            anchors_bv=bv_anchors_by_task,
+            matched_thresholds=matched_by_task,
+            unmatched_thresholds=unmatched_by_task,
+            anchors_dict=anchor_dicts_by_task,
+        )
+
+        if res["mode"] == "train":
+            gt_dict = res["lidar"]["annotations"]
+
+            task_masks = []
+            flag = 0
+            for class_name in class_names_by_task:
+                task_masks.append(
+                    [
+                        np.where(
+                            gt_dict["gt_classes"] == class_name.index(i) + 1 + flag
+                        )
+                        for i in class_name
+                    ]
+                )
+                flag += len(class_name)
+
+            task_boxes = []
+            task_classes = []
+            task_names = []
+            flag2 = 0
+            for idx, mask in enumerate(task_masks):
+                task_box = []
+                task_class = []
+                task_name = []
+                for m in mask:
+                    task_box.append(gt_dict["gt_boxes"][m])
+                    task_class.append(gt_dict["gt_classes"][m] - flag2)
+                    task_name.append(gt_dict["gt_names"][m])
+                task_boxes.append(np.concatenate(task_box, axis=0))
+                task_classes.append(np.concatenate(task_class))
+                task_names.append(np.concatenate(task_name))
+                flag2 += len(mask)
+
+            for task_box in task_boxes:
+                # limit rad to [-pi, pi]
+                task_box[:, -1] = box_np_ops.limit_period(
+                    task_box[:, -1], offset=0.5, period=np.pi * 2
+                )
+
+            # print(gt_dict.keys())
+            gt_dict["gt_classes"] = task_classes
+            gt_dict["gt_names"] = task_names
+            gt_dict["gt_boxes"] = task_boxes
+
+            res["lidar"]["annotations"] = gt_dict
+
+        anchorss = anchor_caches_by_task["anchors"]
+        anchors_bvs = anchor_caches_by_task["anchors_bv"]
+        anchors_dicts = anchor_caches_by_task["anchors_dict"]
+
+        example = {}
+        example["anchors"] = anchorss
+
+        if self.anchor_area_threshold >= 0:
+            example["anchors_mask"] = []
+            for idx, anchors_bv in enumerate(anchors_bvs):
+                anchors_mask = None
+                # slow with high resolution. recommend disable this forever.
+                coors = coordinates
+                dense_voxel_map = box_np_ops.sparse_sum_for_anchors_mask(
+                    coors, tuple(grid_size[::-1][1:])
+                )
+                dense_voxel_map = dense_voxel_map.cumsum(0)
+                dense_voxel_map = dense_voxel_map.cumsum(1)
+                anchors_area = box_np_ops.fused_get_anchors_area(
+                    dense_voxel_map, anchors_bv, voxel_size, pc_range, grid_size
+                )
+                anchors_mask = anchors_area > anchor_area_threshold
+                example["anchors_mask"].append(anchors_mask)
+
+        if res["mode"] == "train":
+            targets_dicts = []
+            for idx, target_assigner in enumerate(self.target_assigners):
+                if "anchors_mask" in example:
+                    anchors_mask = example["anchors_mask"][idx]
+                else:
+                    anchors_mask = None
+                targets_dict = target_assigner.assign_v2(
+                    anchors_dicts[idx],
+                    gt_dict["gt_boxes"][idx],
+                    anchors_mask,
+                    gt_classes=gt_dict["gt_classes"][idx],
+                    gt_names=gt_dict["gt_names"][idx],
+                )
+                targets_dicts.append(targets_dict)
+
+            example.update(
+                {
+                    "labels": [
+                        targets_dict["labels"] for targets_dict in targets_dicts
+                    ],
+                    "reg_targets": [
+                        targets_dict["bbox_targets"] for targets_dict in targets_dicts
+                    ],
+                    "reg_weights": [
+                        targets_dict["bbox_outside_weights"]
+                        for targets_dict in targets_dicts
+                    ],
+                }
+            )
+
+        res["lidar"]["targets"] = example
+
+        return res, info

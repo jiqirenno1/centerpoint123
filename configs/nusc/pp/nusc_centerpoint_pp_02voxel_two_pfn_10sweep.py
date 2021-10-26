@@ -83,12 +83,12 @@ test_cfg = dict(
 # dataset settings
 dataset_type = "NuScenesDataset"
 nsweeps = 10
-data_root = "data/nuScenes"
+data_root = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/v1.0-mini"
 
 db_sampler = dict(
     type="GT-AUG",
     enable=False,
-    db_info_path="data/nuScenes/dbinfos_train_10sweeps_withvelo.pkl",
+    db_info_path="/home/ubuntu/PycharmProjects/det3/CenterPoint/download/v1.0-mini/dbinfos_train_10sweeps_withvelo.pkl",
     sample_groups=[
         dict(car=2),
         dict(truck=3),
@@ -159,13 +159,13 @@ test_pipeline = [
     dict(type="Reformat"),
 ]
 
-train_anno = "data/nuScenes/infos_train_10sweeps_withvelo_filter_True.pkl"
-val_anno = "data/nuScenes/infos_val_10sweeps_withvelo_filter_True.pkl"
+train_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/v1.0-mini/infos_train_10sweeps_withvelo_filter_True.pkl"
+val_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/v1.0-mini/infos_val_10sweeps_withvelo_filter_True.pkl"
 test_anno = None
 
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=8,
+    samples_per_gpu=2,
+    workers_per_gpu=2,
     train=dict(
         type=dataset_type,
         root_path=data_root,
