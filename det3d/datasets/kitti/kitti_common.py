@@ -945,7 +945,7 @@ def get_mylabel_anno(label_path):
     print("content: ", content)
     annotations["occluded"] = np.array([int(x[1]) for x in content])
     print("then len: ", len(content))
-    annotations["alpha"] = np.array([float(x[9]) for x in content])
+    annotations["alpha"] = np.array([float(x[8]) for x in content])
 
     # dimensions will convert hwl format to standard lhw(camera) format.
     annotations["dimensions"] = np.array(
@@ -954,7 +954,7 @@ def get_mylabel_anno(label_path):
     annotations["location"] = np.array(
         [[float(info) for info in x[5:8]] for x in content]
     ).reshape(-1, 3)
-    annotations["rotation_y"] = np.array([float(x[8]) for x in content]).reshape(-1)
+    annotations["rotation_y"] = np.array([float(x[9])*np.pi/180 for x in content]).reshape(-1) ## used always
 
     index = list(range(num_objects)) + [-1] * (num_gt - num_objects)
     annotations["index"] = np.array(index, dtype=np.int32)

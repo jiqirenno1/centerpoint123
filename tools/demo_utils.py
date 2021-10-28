@@ -53,10 +53,10 @@ def view_points(points: np.ndarray, view: np.ndarray, normalize: bool) -> np.nda
     return points
 
 def _second_det_to_nusc_box(detection):
-    box3d = detection["box3d_lidar"]
+    box3d = detection["box3d_lidar"][:, [0, 1, 2, 4, 3, 5, 6]]
     scores = detection["scores"]
     labels = detection["label_preds"]
-    box3d[:, -1] = -box3d[:, -1] - np.pi / 2
+    box3d[:, -1] = -box3d[:, -1]
     box_list = []
     for i in range(box3d.shape[0]):
         quat = Quaternion(axis=[0, 0, 1], radians=box3d[i, -1])
@@ -281,7 +281,7 @@ class Box:
         return copy.deepcopy(self)
 
 
-def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.3):
+def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.2):
     _, ax = plt.subplots(1, 1, figsize=(9, 9), dpi=200)
     points = remove_close(points, radius=3)
     points = view_points(points[:3, :], np.eye(4), normalize=False)

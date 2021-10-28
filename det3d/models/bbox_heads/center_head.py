@@ -168,7 +168,7 @@ class DCNSepHead(nn.Module):
 class CenterHead(nn.Module):
     def __init__(
         self,
-        in_channels=[128,],
+        in_channels=[128, ],
         tasks=[],
         dataset='nuscenes',
         weight=0.25,
@@ -194,7 +194,7 @@ class CenterHead(nn.Module):
         self.crit = FastFocalLoss()
         self.crit_reg = RegLoss()
 
-        self.box_n_dim = 9 if 'vel' in common_heads else 7  
+        self.box_n_dim = 9 if 'vel' in common_heads else 7  ###？？？
         self.use_direction_classifier = False 
 
         if not logger:

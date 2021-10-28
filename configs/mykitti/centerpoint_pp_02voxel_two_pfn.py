@@ -53,7 +53,7 @@ model = dict(
         # code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2, 1.0, 1.0],
         code_weights=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.2, 0.2],
         # common_heads={'reg': (2, 2), 'height': (1, 2), 'dim':(3, 2), 'rot':(2, 2), 'vel': (2, 2)}, # (output_channel, num_conv)
-        common_heads={'reg': (2, 2), 'height': (1, 2), 'dim':(3, 2), 'rot':(2, 2)}, # (output_channel, num_conv)
+        common_heads={'reg': (2, 2), 'height': (1, 2), 'dim':(3, 2), 'rot':(2, 2)},# (output_channel, num_conv)
     ),
 )
 
@@ -128,7 +128,8 @@ train_preprocessor = dict(
     shuffle_points=True,
     global_rot_noise=[-0.3925, 0.3925],
     global_scale_noise=[0.95, 1.05],
-    db_sampler=db_sampler,
+    #db_sampler=db_sampler,
+    db_sampler=None,
     class_names=class_names,
 )
 
@@ -166,7 +167,7 @@ val_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mykitti-origi
 test_anno = None
 
 data = dict(
-    samples_per_gpu=1,
+    samples_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
@@ -219,7 +220,7 @@ log_config = dict(
 )
 # yapf:enable
 # runtime settings
-total_epochs = 20
+total_epochs = 50
 device_ids = range(8)
 dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"

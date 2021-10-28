@@ -37,7 +37,7 @@ from collections import defaultdict
 
 def convert_box(info):
     locs = info["annos"]["location"]
-    dims = info["annos"]["dimensions"][:, [1, 0, 2]]
+    dims = info["annos"]["dimensions"]
     rots = info["annos"]["rotation_y"]
 
     boxes = np.concatenate(
@@ -74,7 +74,7 @@ def main():
         pin_memory=False,
     )
 
-    checkpoint = load_checkpoint(model, '/home/ubuntu/PycharmProjects/det3/CenterPoint/work_dirs/centerpoint_pp_02voxel_two_pfn/epoch_20.pth', map_location="cpu")
+    checkpoint = load_checkpoint(model, '/home/ubuntu/PycharmProjects/det3/CenterPoint/work_dirs/centerpoint_pp_02voxel_two_pfn/epoch_49.pth', map_location="cpu")
     model.eval()
 
     model = model.cuda()

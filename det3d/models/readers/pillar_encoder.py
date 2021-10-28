@@ -82,7 +82,7 @@ class PillarFeatureNet(nn.Module):
         assert len(num_filters) > 0
 
         self.num_input = num_input_features
-        num_input_features += 5
+        num_input_features += 5 # (x,y,z,r,++++ x_c,y_c,z_c,x_p,y_p）
         if with_distance:
             num_input_features += 1
         self._with_distance = with_distance
@@ -110,7 +110,7 @@ class PillarFeatureNet(nn.Module):
         self.x_offset = self.vx / 2 + pc_range[0]
         self.y_offset = self.vy / 2 + pc_range[1]
 
-    def forward(self, features, num_voxels, coors):
+    def forward(self, features, num_voxels, coors): ###？？
         device = features.device
 
         dtype = features.dtype
