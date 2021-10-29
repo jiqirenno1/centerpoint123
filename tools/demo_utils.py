@@ -303,7 +303,7 @@ def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.2):
             box.render(ax, view=np.eye(4), colors=('b', 'b', 'b'), linewidth=1)
 
 
-    axes_limit = eval_range + 3  # Slightly bigger to include boxes that extend beyond the range.
+    axes_limit = eval_range + 35  # Slightly bigger to include boxes that extend beyond the range.
     ax.set_xlim(-axes_limit, axes_limit)
     ax.set_ylim(-axes_limit, axes_limit)
     plt.axis('off')

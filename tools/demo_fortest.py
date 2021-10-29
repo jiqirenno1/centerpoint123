@@ -74,7 +74,7 @@ def main():
         pin_memory=False,
     )
 
-    checkpoint = load_checkpoint(model, '/home/ubuntu/PycharmProjects/det3/CenterPoint/work_dirs/centerpoint_pp_02voxel_two_pfn/epoch_49.pth', map_location="cpu")
+    checkpoint = load_checkpoint(model, '/home/ubuntu/PycharmProjects/det3/CenterPoint/work_dirs/centerpoint_pp_02voxel_two_pfn/latest.pth', map_location="cpu")
     model.eval()
 
     model = model.cuda()
