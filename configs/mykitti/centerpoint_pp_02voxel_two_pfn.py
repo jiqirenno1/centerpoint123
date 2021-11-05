@@ -5,6 +5,7 @@ from det3d.utils.config_tool import get_downsample_factor
 
 tasks = [
     dict(num_class=1, class_names=["Car"]),
+    # dict(num_class=1, class_names=["Cart"]),
     # dict(num_class=2, class_names=["truck", "construction_vehicle"]),
     # dict(num_class=2, class_names=["bus", "trailer"]),
     # dict(num_class=1, class_names=["barrier"]),
@@ -29,9 +30,9 @@ model = dict(
         num_filters=[64, 64],
         num_input_features=3, #changed
         with_distance=False,
-        voxel_size=(0.2, 0.2, 8),
+        voxel_size=(0.2, 0.2, 10),
         # pc_range=(-51.2, -51.2, -5.0, 51.2, 51.2, 3.0),
-        pc_range=(0, -32, -5.0, 160, 32, 3.0),
+        pc_range=(0, -40, -10, 160, 40, 0),
     ),
     backbone=dict(type="PointPillarsScatter", ds_factor=1),
     neck=dict(
@@ -71,7 +72,7 @@ train_cfg = dict(assigner=assigner)
 
 test_cfg = dict(
     # post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-    post_center_limit_range=[0, -32, -10.0, 256, 32, 10.0],
+    post_center_limit_range=[0, -40, -10, 160, 40, 0],
     max_per_img=500,
     nms=dict(
         nms_pre_max_size=1000,
@@ -79,7 +80,7 @@ test_cfg = dict(
         nms_iou_threshold=0.2,
     ),
     score_threshold=0.1,
-    pc_range=[0, -30],
+    pc_range=[0, -40],
     out_size_factor=get_downsample_factor(model),
     voxel_size=[0.2, 0.2]
 )
@@ -87,12 +88,13 @@ test_cfg = dict(
 # dataset settings
 dataset_type = "KittiDataset"
 nsweeps = 1
-data_root = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mykitti-origin"
+data_root = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mydata01"
+# data_root = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mykitti-origin"
 
 db_sampler = dict(
     type="GT-AUG",
     enable=False,
-    db_info_path="/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mykitti-origin/dbinfos_train.pkl",
+    db_info_path="/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mydata01/dbinfos_train.pkl",
     sample_groups=[
         dict(Car=2),
         # dict(truck=3),
@@ -142,8 +144,9 @@ val_preprocessor = dict(
 
 voxel_generator = dict(
     # range=[-51.2, -51.2, -5.0, 51.2, 51.2, 3.0],
-    range=[0, -32, -5.0, 160, 32, 3.0],
-    voxel_size=[0.2, 0.2, 8],
+    # range=[0, -32, -10, 160, 32, 0],
+    range=[0, -40, -10, 160, 40, 0],
+    voxel_size=[0.2, 0.2, 10],
     max_points_in_voxel=20,
     max_voxel_num=[30000, 60000],
 )
@@ -165,13 +168,17 @@ test_pipeline = [
     dict(type="Reformat"),
 ]
 
-train_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mykitti-origin/kitti_infos_train.pkl"
-val_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mykitti-origin/kitti_infos_val.pkl"
+train_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mydata01/kitti_infos_train.pkl"
+val_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mydata01/kitti_infos_val.pkl"
+
+# train_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mykitti-origin/kitti_infos_train.pkl"
+# val_anno = "/home/ubuntu/PycharmProjects/det3/CenterPoint/download/mykitti-origin/kitti_infos_val.pkl"
+
 test_anno = None
 
 data = dict(
     samples_per_gpu=2,
-    workers_per_gpu=2,
+    workers_per_gpu=1,
     train=dict(
         type=dataset_type,
         root_path=data_root,
@@ -212,7 +219,7 @@ lr_config = dict(
     type="one_cycle", lr_max=0.001, moms=[0.95, 0.85], div_factor=10.0, pct_start=0.4,
 )
 
-checkpoint_config = dict(interval=1)
+checkpoint_config = dict(interval=5)
 # yapf:disable
 log_config = dict(
     interval=5,
@@ -223,7 +230,7 @@ log_config = dict(
 )
 # yapf:enable
 # runtime settings
-total_epochs = 40
+total_epochs = 50
 device_ids = range(8)
 dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"

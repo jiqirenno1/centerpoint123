@@ -133,17 +133,17 @@ class Preprocess(object):
             )
             gt_dict["gt_classes"] = gt_classes
 
-            gt_dict["gt_boxes"], points = prep.random_flip_both(gt_dict["gt_boxes"], points)
+            # gt_dict["gt_boxes"], points = prep.random_flip_both(gt_dict["gt_boxes"], points)
             
-            gt_dict["gt_boxes"], points = prep.global_rotation(
-                gt_dict["gt_boxes"], points, rotation=self.global_rotation_noise
-            )
-            gt_dict["gt_boxes"], points = prep.global_scaling_v2(
-                gt_dict["gt_boxes"], points, *self.global_scaling_noise
-            )
-            gt_dict["gt_boxes"], points = prep.global_translate_(
-                gt_dict["gt_boxes"], points, noise_translate_std=self.global_translate_std
-            )
+            # gt_dict["gt_boxes"], points = prep.global_rotation(
+            #     gt_dict["gt_boxes"], points, rotation=self.global_rotation_noise
+            # )
+            # gt_dict["gt_boxes"], points = prep.global_scaling_v2(
+            #     gt_dict["gt_boxes"], points, *self.global_scaling_noise
+            # )
+            # gt_dict["gt_boxes"], points = prep.global_translate_(
+            #     gt_dict["gt_boxes"], points, noise_translate_std=self.global_translate_std
+            # )
         elif self.no_augmentation:
             gt_boxes_mask = np.array(
                 [n in self.class_names for n in gt_dict["gt_names"]], dtype=np.bool_
@@ -202,10 +202,14 @@ class Voxelization(object):
         else:
             max_voxels = self.max_voxel_num[1]
 
+        # print('*************point: ', res["lidar"]["points"].shape)
         voxels, coordinates, num_points = self.voxel_generator.generate(
             res["lidar"]["points"], max_voxels=max_voxels 
         )
         num_voxels = np.array([voxels.shape[0]], dtype=np.int64)
+
+        # print('*************voxel: ', voxels.shape)
+        # print(info)
 
         res["lidar"]["voxels"] = dict(
             voxels=voxels,
@@ -292,11 +296,6 @@ class AssignLabel(object):
         self._min_radius = assigner_cfg.min_radius
 
     def __call__(self, res, info):
-        # print("**********start res:")
-        # print(res)
-        # print("**********start info:")
-        # print(info)
-        # print("**********end")
 
         max_objs = self._max_objs
         class_names_by_task = [t.class_names for t in self.tasks]
@@ -409,7 +408,8 @@ class AssignLabel(object):
                         if not (0 <= ct_int[0] < feature_map_size[0] and 0 <= ct_int[1] < feature_map_size[1]):
                             continue 
 
-                        draw_gaussian(hm[cls_id], ct, radius)
+                        scale = int((pc_range[3] - pc_range[0])/(pc_range[4] - pc_range[1]))
+                        draw_gaussian(hm[cls_id], ct, radius, scale)
 
                         new_idx = k
                         x, y = ct_int[0], ct_int[1]

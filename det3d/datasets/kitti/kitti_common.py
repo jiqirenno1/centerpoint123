@@ -941,10 +941,10 @@ def get_mylabel_anno(label_path):
     num_objects = len([x[0] for x in content if x[0] != "DontCare"])
     annotations["name"] = np.array([x[0] for x in content])
     num_gt = len(annotations["name"])
-    print("content len: ", len(content))
-    print("content: ", content)
+    # print("content len: ", len(content))
+    # print("content: ", content)
     annotations["occluded"] = np.array([int(x[1]) for x in content])
-    print("then len: ", len(content))
+    # print("then len: ", len(content))
     annotations["alpha"] = np.array([float(x[8]) for x in content])
 
     # dimensions will convert hwl format to standard lhw(camera) format.
