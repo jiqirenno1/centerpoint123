@@ -134,7 +134,7 @@ def points_to_voxel(
 
     Returns:
         voxels: [M, max_points, ndim] float tensor. only contain points.
-        coordinates: [M, 3] int32 tensor.
+        coordinates: [M, 3] int32 tensor. #【z, y, x】
         num_points_per_voxel: [M] int32 tensor.
     """
     if not isinstance(voxel_size, np.ndarray):

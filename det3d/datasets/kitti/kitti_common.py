@@ -124,7 +124,7 @@ def create_kitti_info_file(data_path, save_path=None, relative_path=True):
     with open(filename, "wb") as f:
         pickle.dump(kitti_infos_train, f)
     kitti_infos_val = get_kitti_image_info(data_path,
-                                           training=True,
+                                           training=False,
                                            velodyne=True,
                                            # calib=True,
                                            image_ids=val_img_ids,
@@ -943,6 +943,7 @@ def get_mylabel_anno(label_path):
     num_gt = len(annotations["name"])
     # print("content len: ", len(content))
     # print("content: ", content)
+    print(label_path)
     annotations["occluded"] = np.array([int(x[1]) for x in content])
     # print("then len: ", len(content))
     annotations["alpha"] = np.array([float(x[8]) for x in content])

@@ -306,9 +306,9 @@ def visual(points, gt_anno, det, i, eval_range=35, conf_th=0.2):
     axes_limit = eval_range + 100  # Slightly bigger to include boxes that extend beyond the range.
     # ax.set_xlim(-axes_limit, axes_limit)
     # ax.set_ylim(-axes_limit, axes_limit)
-    ax.set_xlim(0, 160)
-    ax.set_ylim(-80, 80)
-    #plt.axis('equal')
+    ax.set_xlim(0, 200)
+    ax.set_ylim(-40, 40)
+    plt.axis('equal')
     plt.axis('off')
 
     plt.savefig("/home/ubuntu/PycharmProjects/det3/CenterPoint/demo/file%02d.png" % i)

@@ -25,6 +25,7 @@ target_assigner = dict(
 model = dict(
     type="PointPillars",
     pretrained=None,
+    export_onnx=True,
     reader=dict(
         type="PillarFeatureNet",
         num_filters=[64, 64],
@@ -33,6 +34,7 @@ model = dict(
         voxel_size=(0.2, 0.2, 10),
         # pc_range=(-51.2, -51.2, -5.0, 51.2, 51.2, 3.0),
         pc_range=(0, -40, -10, 160, 40, 0),
+        export_onnx=True,
     ),
     backbone=dict(type="PointPillarsScatter", ds_factor=1),
     neck=dict(
