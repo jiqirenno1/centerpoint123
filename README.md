@@ -4,7 +4,7 @@
 
 ## 1. label my own data
 - [
-point_cloud_ros_annotation_tool ](https://github.com/Qjizhi/point_cloud_ros_annotation_tool)
+point_cloud_ros_annotation_tool ](https://github.com/jiqirenno1/ros_annotation_tool)
 
 
 ## 2. train my own data
