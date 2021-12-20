@@ -5,7 +5,7 @@ from det3d.utils.config_tool import get_downsample_factor
 
 tasks = [
     dict(num_class=1, class_names=["Car"]),
-    # dict(num_class=1, class_names=["Cart"]),
+    dict(num_class=1, class_names=["Cart"]),
     # dict(num_class=2, class_names=["truck", "construction_vehicle"]),
     # dict(num_class=2, class_names=["bus", "trailer"]),
     # dict(num_class=1, class_names=["barrier"]),
@@ -24,7 +24,8 @@ target_assigner = dict(
 # model settings
 model = dict(
     type="PointPillars",
-    pretrained=None,
+    #pretrained=None,
+    pretrained='/home/ubuntu/PycharmProjects/det3/CenterPoint/work_dirs/centerpoint_pp_02voxel_two_pfn/1/epoch_50.pth',
     reader=dict(
         type="PillarFeatureNet",
         num_filters=[64, 64],
@@ -32,7 +33,7 @@ model = dict(
         with_distance=False,
         voxel_size=(0.2, 0.2, 10),
         # pc_range=(-51.2, -51.2, -5.0, 51.2, 51.2, 3.0),
-        pc_range=(0, -40, -10, 160, 40, 0),
+        pc_range=(0, -32, -10, 192, 32, 0),
     ),
     backbone=dict(type="PointPillarsScatter", ds_factor=1),
     neck=dict(
@@ -72,7 +73,7 @@ train_cfg = dict(assigner=assigner)
 
 test_cfg = dict(
     # post_center_limit_range=[-61.2, -61.2, -10.0, 61.2, 61.2, 10.0],
-    post_center_limit_range=[0, -40, -10, 160, 40, 0],
+    post_center_limit_range=[0, -32, -10, 192, 32, 0],
     max_per_img=500,
     nms=dict(
         nms_pre_max_size=1000,
@@ -80,7 +81,7 @@ test_cfg = dict(
         nms_iou_threshold=0.2,
     ),
     score_threshold=0.1,
-    pc_range=[0, -40],
+    pc_range=[0, -32],
     out_size_factor=get_downsample_factor(model),
     voxel_size=[0.2, 0.2]
 )
@@ -145,7 +146,7 @@ val_preprocessor = dict(
 voxel_generator = dict(
     # range=[-51.2, -51.2, -5.0, 51.2, 51.2, 3.0],
     # range=[0, -32, -10, 160, 32, 0],
-    range=[0, -40, -10, 160, 40, 0],
+    range=[0, -32, -10, 192, 32, 0],
     voxel_size=[0.2, 0.2, 10],
     max_points_in_voxel=20,
     #max_voxel_num=[30000, 60000],
@@ -231,7 +232,7 @@ log_config = dict(
 )
 # yapf:enable
 # runtime settings
-total_epochs = 50
+total_epochs = 100
 device_ids = range(8)
 dist_params = dict(backend="nccl", init_method="env://")
 log_level = "INFO"
